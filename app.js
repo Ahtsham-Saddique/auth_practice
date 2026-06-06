@@ -8,6 +8,8 @@ const userSchema = require("./models/user")
 
 const bcrypt = require ("bcrypt");
 
+const jwt = require("jsonwebtoken");
+
 app.use(express.json());
 app.set('view engine','ejs');
 app.use(express.urlencoded({extended :true}));
@@ -40,6 +42,9 @@ app.post('/create',  (req,res)=>
             age
         }
     )
+
+    let token = jwt.sign({email},"secret");
+    res.cookie('token',token);
     res.send(createdUser);
     
               
@@ -47,6 +52,39 @@ app.post('/create',  (req,res)=>
                  });
   
 })
+
+
+app.get('/logout',(req,res)=>
+{
+        res.cookie('token',"");
+        res.redirect("/");
+});
+
+app.get('/login',(req,res)=>
+{
+ res.render('login');
+})
+
+app.post('/login',async(req,res)=>{
+   let user = await userSchema.findOne({email:req.body.email});
+
+   if (!user)
+   {
+    return res.send("Email or password is incorrect");
+   }
+  bcrypt.compare(req.body.password, user.password, function(err, result) {
+        
+    if(result)
+        {    
+            let token = jwt.sign({email:user.email},"secret");
+            res.cookie("token",token);                  
+            res.send("You are logged in");
+        }
+    else return res.send("Email or passeord is incorrect");
+   
+});
+});
+
 app.listen(3000,()=>
 {
     console.log("Server is running on port 3000");
