@@ -6,6 +6,8 @@ const path = require("path");
 
 const userSchema = require("./models/user")
 
+const bcrypt = require ("bcrypt");
+
 app.use(express.json());
 app.set('view engine','ejs');
 app.use(express.urlencoded({extended :true}));
@@ -20,19 +22,30 @@ app.get('/',(req,res)=>
     res.render('index');
     
 })
-app.post('/create', async (req,res)=>
+app.post('/create',  (req,res)=>
 {  
+    
+    
     let{username,email,password,age}=req.body;
-    let createdUser= await userSchema.create(
+
+
+             bcrypt.genSalt(10, function(err, salt) {
+              bcrypt.hash(password, salt, async function(err, hash) {
+
+                  let createdUser= await userSchema.create(
         {
             username,
             email,
-            password,
+            password:hash,
             age
         }
     )
     res.send(createdUser);
     
+              
+             });
+                 });
+  
 })
 app.listen(3000,()=>
 {
